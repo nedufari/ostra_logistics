@@ -22,6 +22,15 @@ export enum BiddingAction {
 
 
 
+export enum BidEvent {
+    ACCEPTED = 'BID_ACCEPTED',
+    DECLINED = 'BID_DECLINED',
+    COUNTERED = 'BID_COUNTERED',
+    BID_INITIATED ="BID_INITIATED"
+  }
+  
+
+
 export enum RidersApprovalStatus{
     APPROVED ="approved",
     BEING_REVIEWED ="being_reviewed",

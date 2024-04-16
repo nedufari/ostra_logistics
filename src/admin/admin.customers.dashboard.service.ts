@@ -8,9 +8,10 @@ import { BidEntity, IBids, IInitialBidsResponse } from "src/Entity/bids.entity";
 import { IOrder, IOrderRequestFromCustomerToAdmin } from "src/order/order";
 import { OrderRepository } from "src/order/order.reposiroty";
 import { OrderEntity } from "src/Entity/orders.entity";
-import { BidStatus, OrderStatus } from "src/Enums/all-enums";
-import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
-import { AdminPlaceBidDto } from "src/common/common.dto";
+import { BidEvent, BidStatus, OrderStatus } from "src/Enums/all-enums";
+import { Injectable, InternalServerErrorException, NotAcceptableException, NotFoundException } from "@nestjs/common";
+import { AdminPlaceBidDto, counterBidDto } from "src/common/common.dto";
+import { BidEventsService } from "src/common/Events/bid.events.service";
 
 @Injectable()
 export class AdminCustomerDashBoardService{
@@ -19,6 +20,7 @@ export class AdminCustomerDashBoardService{
         @InjectRepository(CustomerEntity) private readonly customerRepo: CustomerRepository,
         @InjectRepository(OrderEntity) private readonly orderRepo: OrderRepository,
         @InjectRepository(BidEntity)private readonly bidRepo: BidRepository,
+        private readonly  bidevent :BidEventsService
 
     ){}
 
@@ -96,6 +98,8 @@ export class AdminCustomerDashBoardService{
       bid.initialBidPlacedAt = new Date()
       bid.bidStatus = BidStatus.BID_PLACED
 
+      this.bidevent.emitBidEvent(BidEvent.BID_INITIATED,{adminID,orderID})
+
       await this.bidRepo.save(bid)
 
       const bidresponse:IInitialBidsResponse ={
@@ -111,6 +115,47 @@ export class AdminCustomerDashBoardService{
     }
 
     //counter bids sent in 
+
+    async counterCustomerCouterBid(adminID:string, bidID:number, dto:counterBidDto):Promise<IBids>{
+      const admin = await this.adminrepo.findOne({ where: { id: adminID} });
+      if (!admin)
+        throw new NotFoundException(
+          `admin with the id: ${adminID} is not found in ostra logistics admin database`,
+        );
+
+        //check if order is related to the countered bid 
+        const bid = await this.bidRepo.findOne({where:{id:bidID},relations:['order','customer']})
+        if (!bid) throw new NotFoundException('this bis isnt found')
+
+        //check if the bid has been countered first before sending in a counter bid
+        if (bid && bid.bidStatus !== BidStatus.COUNTERED) throw new NotAcceptableException('these bid has not been countered so you cannot counter this bid')
+
+        //finally counter the bid and set a new counter bid 
+        bid.counter_bid_offer = dto.counter_bid
+        bid.bidStatus = BidStatus.COUNTERED
+        bid.counteredAt = new Date()
+        await this.bidRepo.save(bid)
+
+        this.bidevent.emitBidEvent(BidEvent.COUNTERED,{adminID,bidID})
+
+        return bid
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     //fetch all customers 
 

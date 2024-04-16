@@ -6,6 +6,7 @@ export interface IBids{
     id:number,
     bidStatus: BidStatus,
     order:OrderEntity
+    // bidGroupId: string;
     bid_value:number
     initialBidPlacedAt: Date;
     BidAcceptedAt: Date;
@@ -46,6 +47,9 @@ bidStatus : BidStatus
 
 @OneToOne(()=>OrderEntity,order=>order.bid)
 order : OrderEntity
+
+// @Column({ nullable: true })
+// bidGroupId: string; // New column to store the bid group identifier
 
 @Column('numeric',{nullable:true})
 bid_value: number;

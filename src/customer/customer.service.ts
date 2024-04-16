@@ -12,10 +12,12 @@ import { CustomerRepository } from './customer.repository';
 import { DistanceService } from 'src/common/services/distance.service';
 import { GeoCodingService } from 'src/common/services/goecoding.service';
 import { BidActionDto, OrderDto, counterBidDto } from 'src/common/common.dto';
-import { BidStatus, BiddingAction, OrderStatus, PaymentStatus } from 'src/Enums/all-enums';
+import { BidEvent, BidStatus, BiddingAction, OrderStatus, PaymentStatus } from 'src/Enums/all-enums';
 import { BidEntity, IBids } from 'src/Entity/bids.entity';
 import { BidRepository } from 'src/common/common.repositories';
 import axios from 'axios';
+import * as nanoid from 'nanoid';
+import { BidEventsService } from 'src/common/Events/bid.events.service';
 
 @Injectable()
 export class CustomerService {
@@ -27,39 +29,62 @@ export class CustomerService {
     private readonly bidRepo: BidRepository,
     private distanceservice: DistanceService,
     private geocodingservice: GeoCodingService,
+    private  BidEvents:BidEventsService,
   ) {}
 
-  async PlaceOrder(customerID: string, dto: OrderDto) {
-    //findcustomer
-    const customer = await this.customerRepo.findOne({
-      where: { id: customerID },
-    });
-    if (!customer)
-      throw new NotAcceptableException(
-        `customer with id ${customerID} not found`,
-      );
+  public generateBidGroupID():string{
+    const gen = nanoid.customAlphabet('1234567890',3)
+    return gen()
+  }
 
-    //extract the long and latitude from both the drop off and take off
-    const pickUpCordinates = await this.geocodingservice.getYahooCoordinates(
-      dto.pickup_address,
-    );
-    const dropOffCordinates = await this.geocodingservice.getYahooCoordinates(
-      dto.dropOff_address,
-    );
 
-    //calculate the distance from the values of the longitude and latitude of tboth points
+  async PlaceOrder(customerID: string, dto: OrderDto | OrderDto[]) {
+  try {
+    const bidGroupID = this.generateBidGroupID()
 
-    const distance = this.distanceservice.calculateDistance(
-      pickUpCordinates,
-      dropOffCordinates,
-    );
+      const customer = await this.customerRepo.findOne({
+          where: { id: customerID },
+      });
+      if (!customer)
+          throw new NotFoundException('customer not found');
+  
+      if (Array.isArray(dto)) {
+          const existingOrders = await this.orderRepo.find({
+              where: { customer: customer, order_status: OrderStatus.BIDDING_ONGOING },
+          });
+          if (existingOrders.length + dto.length > 3) {
+              throw new NotAcceptableException('the limit for multiple order is 3');
+          }
+  
+          const createdOrders: OrderEntity[] = [];
+          for (const orderData of dto) {
+              const order = await this.createOrder(customer, orderData);
+             
+              createdOrders.push(order);
+          }
+          return createdOrders;
+      } else {
+          return await this.createOrder(customer, dto);
+      }
+  } catch (error) {
+    console.log(error)
+    throw new InternalServerErrorException('something went wronng while placing order, please try again')
+    
+  }
+}
 
+private async createOrder(customer: CustomerEntity, dto: OrderDto): Promise<OrderEntity> {
+    const pickupCoordinates = await this.geocodingservice.getYahooCoordinates(dto.pickup_address);
+    const dropOffCoordinates = await this.geocodingservice.getYahooCoordinates(dto.dropOff_address);
+
+    if (!pickupCoordinates || !dropOffCoordinates) {
+        throw new NotAcceptableException('cordeinates not found');
+    }
+
+    const distance = this.distanceservice.calculateDistance(pickupCoordinates, dropOffCoordinates);
     const roundDistance = Math.round(distance);
+    const flatRate = roundDistance * 4.25;
 
-    //calculation for the bidding flat rate by multiplying 100 by 1km
-    const flatrate = roundDistance * 4.25;
-
-    //create the order
     const order = new OrderEntity();
     order.customer = customer;
     order.parcel_name = dto.parcel_name;
@@ -78,8 +103,7 @@ export class CustomerService {
     order.Recipient_name = dto.Recipient_name;
     order.Recipient_phone_number = dto.Recipient_phone_number;
     order.dropOff_address = dto.dropOff_address;
-    order.house_apartment_number_of_dropoff =
-      dto.house_apartment_number_of_dropoff;
+    order.house_apartment_number_of_dropoff = dto.house_apartment_number_of_dropoff;
     order.Area_of_dropoff = dto.Area_of_dropoff;
     order.landmark_of_dropoff = dto.landmark_of_dropoff;
 
@@ -87,27 +111,26 @@ export class CustomerService {
     order.delivery_type = dto.delivery_type;
     order.schedule_date = dto.schedule_date;
 
-    order.pickupLat = pickUpCordinates.lat;
-    order.pickupLong = pickUpCordinates.lon;
-    order.dropOffLat = dropOffCordinates.lat;
-    order.dropOffLong = dropOffCordinates.lon;
+    order.pickupLat = pickupCoordinates.lat;
+    order.pickupLong = pickupCoordinates.lon;
+    order.dropOffLat = dropOffCoordinates.lat;
+    order.dropOffLong = dropOffCoordinates.lon;
     order.distance = roundDistance;
 
-    order.initial_cost = flatrate;
+    order.initial_cost = flatRate;
     order.bidStatus = BidStatus.PENDING;
     order.vehicleType = dto.vehicleType;
     order.payment_status = PaymentStatus.PENDING;
     order.order_status = OrderStatus.BIDDING_ONGOING;
-    order.orderCreatedAtTime = new Date()
+    order.orderCreatedAtTime = new Date();
 
     await this.orderRepo.save(order);
 
-    
-
     return order;
+}
 
-    //
-  }
+
+
 
   //biding process
   //1. accept or decline bid
@@ -158,6 +181,8 @@ export class CustomerService {
        //accept or decline bid 
  
        if (dto && dto.action === BiddingAction.ACCEPT){
+
+        this.BidEvents.emitBidEvent(BidEvent.ACCEPTED,{bidID,orderID})
          //update the order table 
          order.bidStatus = BidStatus.ACCEPTED
          order.accepted_cost_of_delivery = bid.bid_value
@@ -174,6 +199,8 @@ export class CustomerService {
        }
  
        else if (dto && dto.action === BiddingAction.DECLINE){
+
+        this.BidEvents.emitBidEvent(BidEvent.DECLINED,{bidID,orderID})
        //update the order table 
          order.bidStatus = BidStatus.DECLINED
          await this.orderRepo.save(order)
@@ -200,7 +227,7 @@ export class CustomerService {
 
 
   //2. counterbid with an offer
-  async CounterBid(dto:counterBidDto,orderID:number, customerID:string, bidID:number):Promise<IBids>{
+  async CounterBid(dto:counterBidDto, customerID:string, bidID:number):Promise<IBids>{
     try {
       const customer = await this.customerRepo.findOne({
         where: { id: customerID },
@@ -212,28 +239,15 @@ export class CustomerService {
           `customer with id ${customerID} not found`,
         );
   
-        //check the order
-      const order = await this.orderRepo.findOne({ where: { id: orderID } });
-      if (!order)
-        throw new NotFoundException(
-          `the order with the ID ${orderID} does not exist`,
-        );
-  
+      
         //check bid
-        const bid = await this.bidRepo.findOne({ where: { id: bidID } });
+        const bid = await this.bidRepo.findOne({ where: { id: bidID }, relations:['order','customer'] });
       if (!bid)
         throw new NotFoundException(
           `the bid with the ID ${bidID} does not exist`,
         );
   
   
-  
-        //check if bid is accepted by the customer that placed the order
-      if (order && order.customer !== customer)
-        throw new NotAcceptableException(
-          `This customer ${customer.lastname} is not the same with the customer ${order.customer.lastname} that placed this order, therefore, you are not allowed to accept or decline this bid`,
-        );
-
        // Check if order already has a counter offer (enforces one-time counter)
     if (bid.bidStatus === BidStatus.COUNTERED) {
       throw new NotAcceptableException('Counter offer can only be made once for this order');
@@ -243,13 +257,14 @@ export class CustomerService {
       bid.counter_bid_offer = dto.counter_bid
       bid.counteredAt = new Date()
       bid.bidStatus = BidStatus.COUNTERED
+
+      this.BidEvents.emitBidEvent(BidEvent.COUNTERED,{customerID,bidID})
   
       await this.bidRepo.save(bid)
   
       //update ordertable 
-      order.bidStatus =BidStatus.COUNTERED
   
-      return 
+      return bid
   
         
     } catch (error) {
@@ -261,11 +276,17 @@ export class CustomerService {
   }
 
 
-
   // after bid is being finalized make payment and confirm payment the response will be a payment success and a tracking number for
 
-  async  processPayment(order: OrderEntity): Promise<PaymentResponse> {
+  async  processPayment(orderID: number): Promise<PaymentResponse> {
     try {
+      const order = await this.orderRepo.findOne({ where: { id: orderID },relations: ['customer','bid'],  });
+      if (!order)
+        throw new NotFoundException(
+          `the order with the ID ${orderID} does not exist`,
+        );
+
+
       // Check if order is ready for payment (bid accepted)
       if (order.bidStatus !== BidStatus.ACCEPTED) {
         throw new NotAcceptableException('Order cannot be paid for. Bid is not yet accepted');
@@ -278,6 +299,7 @@ export class CustomerService {
           amount: order.accepted_cost_of_delivery * 100, // Convert to kobo (Paystack currency)
           email: order.customer.email, // Customer email for reference
           reference: order.id.toString(), // Order ID as payment reference
+          currency:'NGN'
         },
         {
           headers: {
@@ -288,21 +310,13 @@ export class CustomerService {
       );
   
       if (response.data.status === true) {
-        const paymentUrl = response.data.data.authorization_url;
-  
-        // Redirect user to Paystack payment page
-        window.location.href = paymentUrl;  // Assuming this is a browser-based environment
-  
-        // Alternatively, return the payment URL for redirection on the server-side
-        // return { success: true, paymentUrl };
-  
-        // Payment confirmation logic (to be implemented later)
-        // This will be triggered by Paystack's webhook notification
+        console.log('payment successful')
+       
       } else {
         throw new InternalServerErrorException('Payment initialization failed. Please try again later');
       }
 
-      return
+      return response.data
     } catch (error) {
       console.error(error);
       let errorMessage = 'Payment processing failed. Please try again later';
@@ -316,25 +330,7 @@ export class CustomerService {
     }
   }
   
-  // This function will be called by Paystack's webhook to confirm payment
-  async  handlePaymentConfirmation(data: any) {
-    const reference = data.reference; // Extract payment reference from webhook data
-    const order = await this.orderRepo.findOne({ where: { id: reference } });
-  
-    if (order && data.status === 'success') {
-      order.payment_status = PaymentStatus.SUCCESSFUL;
-      await this.orderRepo.save(order);
-  
-      // Notify user about successful payment (optional)
-    } else {
-      console.error('Payment confirmation failed:', data);
-      // Handle payment failure scenarios (optional)
-    }
-  }
-  
-  
-  
-
+ 
 
   // track order
 }

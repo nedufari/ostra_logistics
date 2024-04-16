@@ -137,22 +137,18 @@ export class OrderEntity implements IOrder {
     accepted_cost_of_delivery: number;
 
 
-    @OneToOne(() => OrderEntity, (order) => order.bid) // Specify the inverse side
+    @OneToOne(() => BidEntity, (bid) => bid.order) // Specify the inverse side
     @JoinColumn({ name: 'orderId', referencedColumnName: 'id' }) // Define join columns
-    bid: OrderEntity;
+    bid: BidEntity;
 
     @ManyToOne(()=>RiderEntity, rider =>rider.assigned_order)
     Rider: RiderEntity;
-
-
-
-
-
-
-
-
   
 
     @ManyToOne(()=>CustomerEntity, owner=>owner.my_orders)
     customer: CustomerEntity
+
+    // @ManyToOne(() => BidEntity, bid => bid.id) // Many orders can be associated with one bid group
+    // @JoinColumn({ name: 'bidGroupId', referencedColumnName: 'bidGroupId' })
+    // bidGroup: BidEntity;
 }

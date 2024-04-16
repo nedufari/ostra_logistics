@@ -1,13 +1,13 @@
-import { Controller, Post, Res, Body, Headers } from '@nestjs/common';
-import { WebhookService } from './webhook.service';
+import { Controller, Post, Res, Body, Headers, Req } from '@nestjs/common';
+import { PaystackWebhookService } from './webhook.service';
+import { Request, Response } from 'express';
 
 @Controller('paystack-webhook')
 export class WebhookController {
-  constructor(private readonly webhookService: WebhookService) {}
+  constructor(private readonly webhookService: PaystackWebhookService) {}
 
-  @Post()
-  async handleWebhook(@Res() res: Response, @Body() body: any, @Headers() header: any) {
-    //await this.webhookService.handleWebhook(res,body,header);
-    return 'Webhook processed successfully'; // Replace with appropriate response
+  @Post('/')
+  async handleWebhook(@Res() res: Response, @Req() req: Request) {
+    return await this.webhookService.handleWebhook(req, res);
   }
 }

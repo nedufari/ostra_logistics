@@ -7,7 +7,7 @@ export class CustomerController{
     constructor(private readonly customerservice:CustomerService){}
     
     @Post('make-order/:customerID')
-    async MakeOrder(@Param('customerID')customerID:string, @Body()dto:OrderDto){
+    async MakeOrder(@Param('customerID')customerID:string, @Body()dto:OrderDto | OrderDto[]){
         return await this.customerservice.PlaceOrder(customerID,dto)
     }
 
@@ -16,9 +16,14 @@ export class CustomerController{
         return await this.customerservice.AcceptORDeclineBid(dto,orderId,customerID,bidID)
      }
 
-     @Patch('counter-bid')
-     async CounterBid(@Body()dto:counterBidDto,@Param("orderID")orderId:number,@Param('customerID')customerID:string,@Param('bidID')bidID:number){
-        return await  this.customerservice.CounterBid(dto,orderId,customerID,bidID)
+     @Patch('counter-bid/:bidID/:CustomerID')
+     async CounterBid(@Body()dto:counterBidDto,@Param('customerID')customerID:string,@Param('bidID')bidID:number){
+        return await  this.customerservice.CounterBid(dto,customerID,bidID)
+     }
+
+     @Post('process-payment/:orderID')
+     async PayWithPaystackForTheOrder(@Param('orderID')orderID:number){
+        return await this.customerservice.processPayment(orderID)
      }
 
      

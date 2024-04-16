@@ -9,12 +9,14 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { CustomerModule } from './customer/customer.module';
 import { RiderModule } from './Riders/riders.module';
 import { AdminModule } from './admin/admin.module';
+import { WebHookModule } from './Payment/webhook.module';
 
 @Module({
   imports: [CustomerModule,
     CommonModule,
     RiderModule,
     AdminModule,
+    WebHookModule,
     
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({ useClass: TypeOrmService }),
