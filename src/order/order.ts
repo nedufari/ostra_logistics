@@ -51,6 +51,7 @@ export interface IOrder{
     dropOffTime:Date,
     
     trackingID:string 
+    dropoffCode :string
     
     order_status:OrderStatus
     orderCreatedAtTime:Date

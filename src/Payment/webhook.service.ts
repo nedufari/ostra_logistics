@@ -6,11 +6,25 @@ import { OrderRepository } from 'src/order/order.reposiroty';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OrderEntity } from 'src/Entity/orders.entity';
 import { PaymentStatus } from 'src/Enums/all-enums';
+import * as nanoid from 'nanoid'
 
 @Injectable()
 export class PaystackWebhookService {
   constructor(@InjectRepository(OrderEntity)private readonly orderRepo: OrderRepository){}
  
+  //generaete 
+  public generateTrackingID():string{
+  const trackingcode = nanoid.customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz',8)
+  return trackingcode()
+}
+
+ //generaete 
+ public generateDropOffCode():string{
+  const dropoffcode = nanoid.customAlphabet('1234567890',6)
+  return dropoffcode()
+ }
+
+
 
    handleWebhook(req: Request, res: Response): void {
    
@@ -44,20 +58,23 @@ export class PaystackWebhookService {
 
   private async handleChargeSuccessEvent(orderReference: number) {
     try {
-      // Find the order by its reference (assuming you store order references in your database)
-      const order = await this.orderRepo.findOne({
-        where: { id: orderReference },
-      });
-
+      const order = await this.orderRepo.findOne({ where: { id: orderReference } });
+  
       if (order) {
-        // Update the order's payment status to successful
-        order.payment_status = PaymentStatus.SUCCESSFUL; // Update with your actual payment status enum/type
+        order.payment_status = PaymentStatus.SUCCESSFUL;
+        const trackingToken = `osl-${this.generateTrackingID()}`;
+        const dropoffCode = this.generateDropOffCode();
+        order.trackingID = trackingToken;
+        order.dropoffCode = dropoffCode;
         await this.orderRepo.save(order);
-
-        console.log(
-          'Order payment status updated successfully:',
-          orderReference,
-        );
+  
+        console.log('Order payment status updated successfully:', orderReference, 'trackingID:', order.trackingID, 'dropoffCode:', order.dropoffCode);
+        
+        // Return the tracking ID and dropoff code in the response
+        return {
+          trackingID: order.trackingID,
+          dropoffCode: order.dropoffCode,
+        };
       } else {
         console.error('Order not found for reference:', orderReference);
       }
@@ -65,4 +82,5 @@ export class PaystackWebhookService {
       console.error('Error handling charge success event:', error);
     }
   }
+  
 }

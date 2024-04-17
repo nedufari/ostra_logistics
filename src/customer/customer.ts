@@ -1,3 +1,4 @@
+import { CardEntity } from "src/Entity/card.entity"
 import { OrderEntity } from "src/Entity/orders.entity"
 import { Gender, Role, StateOFOrigin } from "src/Enums/all-enums"
 
@@ -19,6 +20,7 @@ export interface ICustomer {
     loginCount:number
     locked_until : Date
     my_orders: OrderEntity[]
+    my_cards :CardEntity[]
 
 
 }

@@ -2,6 +2,7 @@ import { Gender, Role, StateOFOrigin } from "src/Enums/all-enums";
 import { ICustomer } from "src/customer/customer";
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { OrderEntity } from "./orders.entity";
+import { CardEntity } from "./card.entity";
 
 @Entity({name:"Customer",})
 export class CustomerEntity implements ICustomer{
@@ -75,7 +76,10 @@ export class CustomerEntity implements ICustomer{
     locked_until: Date;
 
     @OneToMany(()=>OrderEntity, order=>order.customer)
-    my_orders: OrderEntity[]
+    my_orders: OrderEntity[];
+
+    @OneToMany(()=>CardEntity,card => card.card_owner )
+    my_cards :CardEntity[]
     
 
 

@@ -1,36 +1,36 @@
-import { Controller, UploadedFile, UseInterceptors, Post,Get,Patch,Delete, BadRequestException, Query, InternalServerErrorException, Body, Param } from "@nestjs/common";
+import { Controller, UploadedFile, UseInterceptors, Post,Get,Patch,Delete, BadRequestException, Query, InternalServerErrorException, Body, Param, UseGuards } from "@nestjs/common";
 import { AdminRiderDashboardService } from "./admin.riders.dashboard.service";
 import { RegisterRiderByAdminDto, UpdateRiderInfoByAdminDto } from "./admin.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { IChangeRiderPassword, IRegisterRider } from "src/Riders/riders";
 import { RiderEntity } from "src/Entity/riders.entity";
+import { JwtGuard } from "src/auth/guard/jwt.guard";
+import { Multer } from "multer";
 
+@UseGuards(JwtGuard)
 @Controller('admin-rider-dashboard')
 export class AdminRiderDashBoardController{
     constructor(private readonly adminriderservice:AdminRiderDashboardService){}
 
 
     @Post('/register/:adminId')
-    @UseInterceptors(FileInterceptor('profile_picture'))
-    async AdminRegisterRider(@Param('adminId')adminId:string,@Body()dto:RegisterRiderByAdminDto,@UploadedFile()file:Express.Multer.File):Promise<{message: string; response: IRegisterRider}>{
-        return await this.adminriderservice.RegisterRider(adminId,dto,file)
-
-        
+    async AdminRegisterRider(@Param('adminId')adminId:string,@Body()dto:RegisterRiderByAdminDto):Promise<{message: string; response: IRegisterRider}>{
+        return await this.adminriderservice.RegisterRider(dto) 
     }
 
-    @Patch('/update-rider-info/:adminId/:riderId')
-    async UpdateRiderInfo(@Param('adminId')adminId:string,@Param('riderId')riderId:string,@Body()dto:UpdateRiderInfoByAdminDto,@UploadedFile()file:Express.Multer.File):Promise<{message: string; response: IRegisterRider}>{
-        return await this.adminriderservice.UpdateRiderInfoByAdmin(adminId,riderId,dto,file)
+    @Patch('/update-rider-info/:riderId')
+    async UpdateRiderInfo(@Param('riderId')riderId:string,@Body()dto:UpdateRiderInfoByAdminDto):Promise<{message: string; response: IRegisterRider}>{
+        return await this.adminriderservice.UpdateRiderInfoByAdmin(riderId,dto,)
     }
 
-    @Delete('delete-rider/:adminID/:riderID')
-    async DeleteRider(@Param('adminID')adminID:string, @Param('riderID')riderID:string): Promise<{ message: string | BadRequestException }> {
-        return await this.adminriderservice.AdminDeleteRider(adminID,riderID)
+    @Delete('delete-rider/:riderID')
+    async DeleteRider( @Param('riderID')riderID:string): Promise<{ message: string | BadRequestException }> {
+        return await this.adminriderservice.AdminDeleteRider(riderID)
     }
 
-    @Patch('/change-rider-password/:adminID/:riderID')
+    @Patch('/change-rider-password/:riderID')
     async ChangeRiderPassword(@Param('adminID')adminID:string, @Param('riderID')riderID:string):Promise<{ message: string; response: IChangeRiderPassword }> {
-        return await this.adminriderservice.AdminChangeRiderPassword(adminID,riderID)
+        return await this.adminriderservice.AdminChangeRiderPassword(riderID)
     }
 
     @Get('/all-riders')
@@ -47,6 +47,24 @@ export class AdminRiderDashBoardController{
     @Get('/search-riders')
     async SearchRider(@Query('keyword')keyword:string|any){
         return await this.adminriderservice.SearchForRider(keyword)
+    }
+
+    @Patch('upload-profile-pics/:riderID')
+    @UseInterceptors(FileInterceptor('image'))
+    async UploadProfilePics(@Param('riderID')riderID:string,@UploadedFile()file:Express.Multer.File){
+        return await this.adminriderservice.UploadRiderProfilePics(file,riderID)
+    }
+
+    @Patch('upload-driver-license-front/:riderID')
+    @UseInterceptors(FileInterceptor('image'))
+    async UploadDriverLicenseFront(@Param('riderID')riderID:string,@UploadedFile()file:Express.Multer.File){
+        return await this.adminriderservice.UploadDriverLicenseFront(file,riderID)
+    }
+
+    @Patch('upload-driver-license-back/:riderID')
+    @UseInterceptors(FileInterceptor('image'))
+    async UploadDriverLicenseBack(@Param('riderID')riderID:string,@UploadedFile()file:Express.Multer.File){
+        return await this.adminriderservice.UploadDriverLicenseBack(file,riderID)
     }
 
 

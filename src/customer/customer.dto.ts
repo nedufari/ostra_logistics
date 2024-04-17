@@ -1,4 +1,4 @@
-import { IsDateString, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsStrongPassword, Matches } from "class-validator";
+import { IsCreditCard, IsDateString, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsStrongPassword, Matches, MaxLength } from "class-validator";
 import { DeliveryPriority, Gender, VehicleType } from "src/Enums/all-enums";
 import { Match } from "src/common/helpers/match.decorator";
 
@@ -43,6 +43,29 @@ export class addPasswordDto{
 }
 
 
+export class ChangePasswordDto{
+
+    @IsString()
+    @IsNotEmpty()
+    oldPassword:string
+
+    @IsString()
+    @IsNotEmpty()
+    @IsStrongPassword({
+        minLength:8,
+        minLowercase:1,
+        minNumbers:1,
+        minSymbols:1,
+        minUppercase:1
+    })
+    password:string 
+
+    @IsString()
+    @IsNotEmpty()
+    @Match('password', { message: 'ConfirmPassword does not match the new password.' })
+    confirmPassword:string 
+
+}
 
 export class UpdateCustomerDto{
 
@@ -72,6 +95,7 @@ export class UpdateCustomerDto{
     profile_picture: string 
 
     @IsEnum(Gender)
+    @IsOptional()
     gender:Gender
 
 }
@@ -96,5 +120,26 @@ export class placeOrderDto{
     delivery_date?: Date
 }
 
+
+export class CardDetailsDto {
+    @IsNotEmpty()
+    @IsCreditCard()
+    cardNumber: string;
+  
+    @IsNotEmpty()
+    @MaxLength(4)
+    @IsString()
+    expiryMonth: string;
+  
+    @IsNotEmpty()
+    @MaxLength(4)
+    @IsString()
+    expiryYear: string;
+  
+    @IsNotEmpty()
+    @MaxLength(3)
+    @IsString()
+    cvv: string;
+  }
 
 

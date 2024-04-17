@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { TypeOrmModuleOptions } from "@nestjs/typeorm";
 import { AdminEntity } from "src/Entity/admins.entity";
 import { BidEntity } from "src/Entity/bids.entity";
+import { CardEntity } from "src/Entity/card.entity";
 import { CustomerEntity } from "src/Entity/customers.entity";
 import { Notifications } from "src/Entity/notifications.entity";
 import { OrderEntity } from "src/Entity/orders.entity";
@@ -24,7 +25,7 @@ export class TypeOrmService {
         database: this.configservice.get('DATABASE_NAME'),
         synchronize: true,
         logging: false,
-        entities: [ AdminEntity, UserOtp, Notifications, CustomerEntity, OrderEntity,RiderEntity,BidEntity
+        entities: [ AdminEntity, UserOtp, Notifications, CustomerEntity, OrderEntity,RiderEntity,BidEntity,CardEntity
           
         ],
         migrations: [],

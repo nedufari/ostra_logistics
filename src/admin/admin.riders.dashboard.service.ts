@@ -53,15 +53,10 @@ export class AdminRiderDashboardService {
 
   //admin register rider
   async RegisterRider(
-    adminid: string,
+   
     dto: RegisterRiderByAdminDto,
-    mediafile: Express.Multer.File,
   ): Promise<{ message: string; response: IRegisterRider }> {
-    const admin = await this.adminripo.findOne({ where: { id: adminid } });
-    if (!admin)
-      throw new NotFoundException(
-        `admin with the id: ${adminid} is not found in ostra logistics admin database`,
-      );
+  
 
     const genpassword = await this.generatePassword();
     const hashedpassword =
@@ -76,9 +71,7 @@ export class AdminRiderDashboardService {
     const today = new Date();
     const age = today.getFullYear() - dob.getFullYear();
 
-    const display_pics = await this.uploadservice.uploadFile(mediafile);
-    const mediaurl = `http://localhost:3000/api/v1/ostra-logistics_api/uploadfile/public/${display_pics}`;
-
+    
     //register new rider
     const rider = new RiderEntity();
     (rider.firstname = dto.firstname), (rider.lastname = dto.lastname);
@@ -87,18 +80,18 @@ export class AdminRiderDashboardService {
     (rider.DOB = dto.DOB),
       (rider.age = age),
       (rider.mobile = dto.mobile),
-      (rider.driver_license = mediaurl);
+     
     rider.marital_status = dto.marital_status;
     rider.home_address = dto.home_address;
     (rider.state_of_orgin = dto.state_of_origin),
       (rider.LGA_of_origin = dto.LGA_of_origin),
       (rider.guarantor1_name = dto.guarantor1_name);
-    rider.guarantor1_picture = mediaurl;
+    
     rider.guarantor1_relatioship_with_rider =
       dto.guarantor1_relatioship_with_rider;
     rider.gurantor1_mobile = dto.mobile;
     rider.guarantor2_name = dto.guarantor2_name;
-    rider.guarantor2_picture = mediaurl;
+   ;
     rider.guarantor2_relatioship_with_rider =
       dto.guarantor2_relatioship_with_rider;
 
@@ -143,7 +136,7 @@ export class AdminRiderDashboardService {
 
     //save notification
     const notification = new Notifications();
-    notification.account = admin.id;
+    notification.account = "admin";
     notification.subject = 'Admin Registered a Rider !';
     notification.notification_type = NotificationType.RIDER_REGISTERED;
     notification.message = `a new rider has ben created on ostra logistics platform `;
@@ -158,16 +151,11 @@ export class AdminRiderDashboardService {
   //update rider information
 
   async UpdateRiderInfoByAdmin(
-    adminId: string,
     riderId: string,
     dto: UpdateRiderInfoByAdminDto,
-    mediafile: Express.Multer.File,
+    
   ): Promise<{ message: string; response: IRegisterRider }> {
-    const admin = await this.adminripo.findOne({ where: { id: adminId } });
-    if (!admin)
-      throw new NotFoundException(
-        `admin with the id: ${adminId} is not found in ostra logistics admin database`,
-      );
+  
 
     const findriderbyid = await this.riderripo.findOne({
       where: { id: riderId },
@@ -183,9 +171,7 @@ export class AdminRiderDashboardService {
     const today = new Date();
     const age = today.getFullYear() - dob.getFullYear();
 
-    const display_pics = await this.uploadservice.uploadFile(mediafile);
-    const mediaurl = `http://localhost:3000/api/v1/ostra-logistics_api/uploadfile/public/${display_pics}`;
-
+   
     //update record
     const rider = new RiderEntity();
     (rider.firstname = dto.firstname),
@@ -193,19 +179,18 @@ export class AdminRiderDashboardService {
       (rider.DOB = dto.DOB),
       (rider.age = age),
       (rider.mobile = dto.mobile),
-      (rider.profile_picture = mediaurl);
-    rider.driver_license = mediaurl;
+    
     rider.marital_status = dto.marital_status;
     rider.home_address = dto.home_address;
     (rider.state_of_orgin = dto.state_of_origin),
       (rider.LGA_of_origin = dto.LGA_of_origin),
       (rider.guarantor1_name = dto.guarantor1_name);
-    rider.guarantor1_picture = mediaurl;
+    
     rider.guarantor1_relatioship_with_rider =
       dto.guarantor1_relatioship_with_rider;
     rider.gurantor1_mobile = dto.mobile;
     rider.guarantor2_name = dto.guarantor2_name;  
-    rider.guarantor2_picture = mediaurl;
+    
     rider.guarantor2_relatioship_with_rider =
       dto.guarantor2_relatioship_with_rider;
 
@@ -241,7 +226,7 @@ export class AdminRiderDashboardService {
 
     //save notification
     const notification = new Notifications();
-    notification.account = admin.id;
+    notification.account = "super admin";
     notification.subject = 'Admin Updated The Record of a Rider !';
     notification.notification_type = NotificationType.RIDER_INFO_UPDATED;
     notification.message = `the record of the rider with the id ${riderId} has been updated  on ostra logistics platform `;
@@ -253,16 +238,110 @@ export class AdminRiderDashboardService {
     };
   }
 
+
+
+  async UploadRiderProfilePics(
+    mediafile: Express.Multer.File,riderID:string):Promise<{message:string}>{
+      try {
+
+        const findriderbyid = await this.riderripo.findOne({
+          where: { id: riderID },
+        });
+        if (!findriderbyid)
+          throw new NotFoundException(
+            `rider with id:${riderID} is not found in the ostra logistics rider database`,
+          );
+        const display_pics = await this.uploadservice.uploadFile(mediafile);
+        const mediaurl = `http://localhost:3000/api/v1/ostra-logistics_api/uploadfile/public/${display_pics}`;
+  
+        //update the image url 
+  
+        findriderbyid.profile_picture = mediaurl
+  
+        await this.riderripo.save(findriderbyid)
+  
+        return {message:'your profile picture has been uploaded successully '}
+  
+      } catch (error) {
+        console.log(error)
+        throw new InternalServerErrorException('something went wrong during profile picture upload')
+        
+      }
+
+    }
+
+    async UploadDriverLicenseFront(
+      mediafile: Express.Multer.File,riderID:string):Promise<{message:string}>{
+        try {
+  
+          const findriderbyid = await this.riderripo.findOne({
+            where: { id: riderID },
+          });
+          if (!findriderbyid)
+            throw new NotFoundException(
+              `rider with id:${riderID} is not found in the ostra logistics rider database`,
+            );
+          const display_pics = await this.uploadservice.uploadFile(mediafile);
+          const mediaurl = `http://localhost:3000/api/v1/ostra-logistics_api/uploadfile/public/${display_pics}`;
+    
+          //update the image url 
+    
+          findriderbyid.driver_license = mediaurl
+    
+          await this.riderripo.save(findriderbyid)
+    
+          return {message:'your driver license front has been uploaded successully '}
+    
+        } catch (error) {
+          console.log(error)
+          throw new InternalServerErrorException('something went wrong during profile picture upload')
+          
+        }
+  
+      }
+
+
+      async UploadDriverLicenseBack(
+        mediafile: Express.Multer.File,riderID:string):Promise<{message:string}>{
+          try {
+    
+            const findriderbyid = await this.riderripo.findOne({
+              where: { id: riderID },
+            });
+            if (!findriderbyid)
+              throw new NotFoundException(
+                `rider with id:${riderID} is not found in the ostra logistics rider database`,
+              );
+            const display_pics = await this.uploadservice.uploadFile(mediafile);
+            const mediaurl = `http://localhost:3000/api/v1/ostra-logistics_api/uploadfile/public/${display_pics}`;
+      
+            //update the image url 
+      
+            findriderbyid.driver_license = mediaurl
+      
+            await this.riderripo.save(findriderbyid)
+      
+            return {message:'your driver license back has been uploaded successully '}
+      
+          } catch (error) {
+            console.log(error)
+            throw new InternalServerErrorException('something went wrong during profile picture upload')
+            
+          }
+    
+        }
+
+
+
+
+
+
+
   //admin delete rider
   async AdminDeleteRider(
-    adminID: string,
+    
     riderID: string,
   ): Promise<{ message: string | BadRequestException }> {
-    const admin = await this.adminripo.findOne({ where: { id: adminID } });
-    if (!admin)
-      throw new NotFoundException(
-        `admin with the id: ${adminID} is not found in ostra logistics admin database`,
-      );
 
     const findriderbyid = await this.riderripo.findOne({
       where: { id: riderID },
@@ -277,28 +356,23 @@ export class AdminRiderDashboardService {
 
     //save the notification
     const notification = new Notifications();
-    notification.account = admin.id;
+    notification.account = "super admin";
     notification.subject = 'Rider deleted !';
     notification.notification_type = NotificationType.RIDER_DELETED;
-    notification.message = `the rider with id ${riderID}  has been deleted from the ostra logistics application by superAdmin ${admin.firstname} `;
+    notification.message = `the rider with id ${riderID}  has been deleted from the ostra logistics application by superAdmin  `;
     await this.notificationripo.save(notification);
 
     return {
-      message: ` ${findriderbyid.firstname}  has been deleted  by the super admin ${admin.firstname}`,
+      message: ` ${findriderbyid.firstname}  has been deleted  by the super admin `,
     };
   }
 
   // admin change rider password
 
   async AdminChangeRiderPassword(
-    adminID: string,
+   
     riderID: string,
   ): Promise<{ message: string; response: IChangeRiderPassword }> {
-    const admin = await this.adminripo.findOne({ where: { id: adminID } });
-    if (!admin)
-      throw new NotFoundException(
-        `admin with the id: ${adminID} is not found in ostra logistics admin database`,
-      );
 
     const findriderbyid = await this.riderripo.findOne({
       where: { id: riderID },
@@ -318,10 +392,10 @@ export class AdminRiderDashboardService {
 
     //save the notification
     const notification = new Notifications();
-    notification.account = admin.id;
+    notification.account = "super admin";
     notification.subject = 'Rider password changed !';
     notification.notification_type = NotificationType.RIDER_PASSWORD_CHANGED;
-    notification.message = `the rider with id ${riderID} password has been changed on the admin portal of ostra ogistics by superadmin ${admin.firstname} `;
+    notification.message = `the rider with id ${riderID} password has been changed on the admin portal of ostra ogistics by superadmin `;
     await this.notificationripo.save(notification);
 
     // customised response

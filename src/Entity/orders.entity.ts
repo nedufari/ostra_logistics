@@ -133,6 +133,10 @@ export class OrderEntity implements IOrder {
     @Column({  length: 255, nullable:true })
     trackingID: string;
 
+    @Column({  length: 255, nullable:true })
+    dropoffCode: string;
+
+    
     @Column('numeric',{nullable:true})
     accepted_cost_of_delivery: number;
 

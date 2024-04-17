@@ -28,15 +28,11 @@ export class AdminStaffDasboardService{
 
     //admin register rider
   async RegisterStaff(
-    superadminId: string,
+
     dto: RegisterOtherAdminByAdminDto,
-    mediafile: Express.Multer.File,
+    
   ): Promise<{ message: string; response: ICreateAdmins }> {
-    const admin = await this.adminripo.findOne({ where: { id: superadminId } });
-    if (!admin)
-      throw new NotFoundException(
-        `Super admin with the id: ${superadminId} is not found in ostra logistics admin database`,
-      );
+   
 
     const genpassword = await this.adminriderservice.generatePassword();
     const hashedpassword =
@@ -51,15 +47,14 @@ export class AdminStaffDasboardService{
     const today = new Date();
     const age = today.getFullYear() - dob.getFullYear();
 
-    const display_pics = await this.uploadservice.uploadFile(mediafile);
-    const mediaurl = `http://localhost:3000/api/v1/ostra-logistics_api/uploadfile/public/${display_pics}`;
-
+   
     //register new rider
     const newadmin = new AdminEntity();
     (newadmin.firstname = dto.firstname), 
     (newadmin.lastname = dto.lastname);
     newadmin.email = emailnow;
     newadmin.password = hashedpassword;
+  
     (newadmin.DOB = dto.DOB),
     (newadmin.age = age),
     (newadmin.mobile = dto.mobile),
@@ -108,7 +103,7 @@ export class AdminStaffDasboardService{
 
     //save notification
     const notification = new Notifications();
-    notification.account = admin.id;
+    notification.account = "super admin";
     notification.subject = 'Admin Registered another admin  !';
     notification.notification_type = NotificationType.ADMIN_CREATED;
     notification.message = `a new admin  has ben created on ostra logistics platform `;
@@ -121,16 +116,11 @@ export class AdminStaffDasboardService{
   }
 
   async UpdateStaffInfoByAdmin(
-    superadminId: string,
+  
     adminId: string,
     dto: UpdateOtherAdminInfoByAdminDto,
-    mediafile: Express.Multer.File,
   ): Promise<{ message: string; response: ICreateAdmins }> {
-    const admin = await this.adminripo.findOne({ where: { id: superadminId } });
-    if (!admin)
-      throw new NotFoundException(
-        `admin with the id: ${adminId} is not found in ostra logistics admin database`,
-      );
+   
 
     const findotheradmin = await this.adminripo.findOne({
       where: { id: adminId },
@@ -146,9 +136,7 @@ export class AdminStaffDasboardService{
     const today = new Date();
     const age = today.getFullYear() - dob.getFullYear();
 
-    const display_pics = await this.uploadservice.uploadFile(mediafile);
-    const mediaurl = `http://localhost:3000/api/v1/ostra-logistics_api/uploadfile/public/${display_pics}`;
-
+   
     //update other admin record
     const updateadmin = new AdminEntity();
     (updateadmin.firstname = dto.firstname), 
@@ -193,7 +181,7 @@ export class AdminStaffDasboardService{
 
     //save notification
     const notification = new Notifications();
-    notification.account = admin.id;
+    notification.account = "super admin";
     notification.subject = 'Admin Updated The Record of a Rider !';
     notification.notification_type = NotificationType.RIDER_INFO_UPDATED;
     notification.message = `the record of the rider with the id ${adminId} has been updated  on ostra logistics platform `;
@@ -209,14 +197,10 @@ export class AdminStaffDasboardService{
 
   //admin delete rider
   async AdminDeleteStaff(
-    superadminID: string,
+
     adminID: string,
   ): Promise<{ message: string | InternalServerErrorException }> {
-    const admin = await this.adminripo.findOne({ where: { id: superadminID } });
-    if (!admin)
-      throw new NotFoundException(
-        `admin with the id: ${adminID} is not found in ostra logistics admin database`,
-      );
+  
 
     const findotheradmin = await this.adminripo.findOne({
       where: { id: adminID },
@@ -231,28 +215,24 @@ export class AdminStaffDasboardService{
 
     //save the notification
     const notification = new Notifications();
-    notification.account = admin.id;
+    notification.account = "super admin";
     notification.subject = 'Staff deleted !';
     notification.notification_type = NotificationType.ADMIN_DELETED;
-    notification.message = `the staff with id ${adminID}  has been deleted from the ostra logistics application by superAdmin ${admin.firstname} `;
+    notification.message = `the staff with id ${adminID}  has been deleted from the ostra logistics application by superAdmin `;
     await this.notificationripo.save(notification);
 
     return {
-      message: ` ${findotheradmin.firstname}  has been deleted  by the super admin ${admin.firstname}`,
+      message: ` ${findotheradmin.firstname}  has been deleted  by the super admin `,
     };
   }
 
   // admin change rider password
 
   async AdminChangeStaffPassword(
-    adminID: string,
+    
     staffID: string,
   ): Promise<{ message: string; response: IChangeRiderPassword }> {
-    const admin = await this.adminripo.findOne({ where: { id: adminID } });
-    if (!admin)
-      throw new NotFoundException(
-        `admin with the id: ${adminID} is not found in ostra logistics admin database`,
-      );
+     
 
     const findstaff = await this.riderripo.findOne({
       where: { id: staffID },
@@ -272,10 +252,10 @@ export class AdminStaffDasboardService{
 
     //save the notification
     const notification = new Notifications();
-    notification.account = admin.id;
+    notification.account = "super admin";
     notification.subject = 'Staff password changed !';
     notification.notification_type = NotificationType.ADMIN_PASSWORD_CHANGED;
-    notification.message = `the Staff with id ${staffID} password has been changed on the admin portal of ostra ogistics by superadmin ${admin.firstname} `;
+    notification.message = `the Staff with id ${staffID} password has been changed on the admin portal of ostra ogistics by superadmin  `;
     await this.notificationripo.save(notification);
 
     // customised response

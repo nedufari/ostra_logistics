@@ -15,10 +15,12 @@ import { CustomerController } from "./customer.controller";
 import { CustomerService } from "./customer.service";
 import { BidEntity } from "src/Entity/bids.entity";
 import { BidEventsService } from "src/common/Events/bid.events.service";
+import { CardEntity } from "src/Entity/card.entity";
+import { UploadService } from "src/common/helpers/upload.service";
 
 @Module({
-    imports:[TypeOrmModule.forFeature([CustomerEntity,UserOtp,Notifications,OrderEntity,BidEntity])],
-    providers:[CustomerAuthService,JwtService,ConfigService,Mailer,DistanceService,GeoCodingService,CustomerService,BidEventsService],
+    imports:[TypeOrmModule.forFeature([CustomerEntity,UserOtp,Notifications,OrderEntity,BidEntity,CardEntity])],
+    providers:[CustomerAuthService,JwtService,ConfigService,Mailer,DistanceService,GeoCodingService,CustomerService,BidEventsService,UploadService],
     controllers:[CustomerAuthController,CustomerController]
 })
 export class CustomerModule{}

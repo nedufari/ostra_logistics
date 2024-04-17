@@ -1,47 +1,48 @@
-import { Body, Controller, Delete, Get, InternalServerErrorException, Param, Patch, Post, Query, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Delete, Get, InternalServerErrorException, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { AdminStaffDasboardService } from "./admin.staff.dashboard.service";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { RegisterOtherAdminByAdminDto, UpdateOtherAdminInfoByAdminDto } from "./admin.dto";
 import { ICreateAdmins } from "./admin";
 import { AdminEntity } from "src/Entity/admins.entity";
 import { IChangeRiderPassword } from "src/Riders/riders";
+import { JwtGuard } from "src/auth/guard/jwt.guard";
 
+@UseGuards(JwtGuard)
 @Controller('admin-staff-dashboard')
 export class AdminStaffDashBoardController{
     constructor(private readonly adminstaffservice:AdminStaffDasboardService){}
 
 
-    @Post('/regster/:adminId')
-    @UseInterceptors(FileInterceptor('media'))
-    async AdminRegisterStaff(@Param('adminId')adminId:string,dto:RegisterOtherAdminByAdminDto,@UploadedFile()file:Express.Multer.File):Promise<{message: string; response: ICreateAdmins}>{
-        return await this.adminstaffservice.RegisterStaff(adminId,dto,file)
+    @Post('/regster/')
+    async AdminRegisterStaff(dto:RegisterOtherAdminByAdminDto,){
+        return await this.adminstaffservice.RegisterStaff(dto)
 
         
     }
 
     @Patch('/update-staff-info/:adminId/:staffId')
-    async UpdateRiderInfo(@Param('adminId')adminId:string,@Param('staffId')staffId:string,@Body()dto:UpdateOtherAdminInfoByAdminDto,@UploadedFile()file:Express.Multer.File):Promise<{message: string; response: ICreateAdmins}>{
-        return await this.adminstaffservice.UpdateStaffInfoByAdmin(adminId,staffId,dto,file)
+    async UpdateRiderInfo(@Param('staffId')staffId:string,@Body()dto:UpdateOtherAdminInfoByAdminDto){
+        return await this.adminstaffservice.UpdateStaffInfoByAdmin(staffId,dto)
     }
 
-    @Delete('delete-staff/:adminID/:staffId')
-    async DeleteRider(adminID:string, riderID:string): Promise<{ message: string | InternalServerErrorException }> {
-        return await this.adminstaffservice.AdminDeleteStaff(adminID,riderID)
+    @Delete('delete-staff/:staffId')
+    async DeleteRider(@Param('riderID') riderID:string) {
+        return await this.adminstaffservice.AdminDeleteStaff(riderID)
     }
 
-    @Patch('/change-rider-password/:adminID/:staffID')
-    async ChangeRiderPassword(@Param('adminID')adminID:string, @Param('staffID')staffID:string):Promise<{ message: string; response: IChangeRiderPassword }> {
-        return await this.adminstaffservice.AdminChangeStaffPassword(adminID,staffID)
+    @Patch('/change-staff-password/:staffID')
+    async ChangeRiderPassword( @Param('staffID')staffID:string) {
+        return await this.adminstaffservice.AdminChangeStaffPassword(staffID)
     }
 
     @Get('/all-riders')
-    async GetAllRiders(@Query('page')page:number, @Query('limit')limit:number):Promise<AdminEntity[] | InternalServerErrorException>{
+    async GetAllRiders(@Query('page')page:number, @Query('limit')limit:number){
         return await this.adminstaffservice.GetAllStaffs(page, limit);
         
     }
 
     @Get('/one-rider/:staffID')
-    async GetOneRider(staffID:string): Promise<AdminEntity | InternalServerErrorException> {
+    async GetOneRider(staffID:string) {
         return await this.adminstaffservice.GetOneStaffByID(staffID)
     }
 

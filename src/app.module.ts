@@ -10,6 +10,7 @@ import { CustomerModule } from './customer/customer.module';
 import { RiderModule } from './Riders/riders.module';
 import { AdminModule } from './admin/admin.module';
 import { WebHookModule } from './Payment/webhook.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [CustomerModule,
@@ -17,6 +18,7 @@ import { WebHookModule } from './Payment/webhook.module';
     RiderModule,
     AdminModule,
     WebHookModule,
+    AuthModule,
     
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({ useClass: TypeOrmService }),
