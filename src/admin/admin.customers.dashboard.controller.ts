@@ -1,7 +1,9 @@
-import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { AdminCustomerDashBoardService } from "./admin.customers.dashboard.service";
 import { AdminPlaceBidDto } from "src/common/common.dto";
+import { JwtGuard } from "src/auth/guard/jwt.guard";
 
+@UseGuards(JwtGuard)
 @Controller('admin-customer-dashboard')
 export class AdminCustomerDashBoardController{
     constructor(private readonly admincustomerservice:AdminCustomerDashBoardService){}
@@ -15,8 +17,8 @@ export class AdminCustomerDashBoardController{
 
     }
 
-    @Post('initial-bid/:orderID/:adminID')
-    async MakeFirstBid(@Body()dto:AdminPlaceBidDto, @Param("orderID")orderID:number,@Param("adminID")adminID:string){
-        return await this.admincustomerservice.MakeOpenningBid(adminID,orderID,dto)
+    @Post('initial-bid/:orderID')
+    async MakeFirstBid(@Body()dto:AdminPlaceBidDto, @Param("orderID")orderID:number,){
+        return await this.admincustomerservice.MakeOpenningBid(orderID,dto)
     }
 }

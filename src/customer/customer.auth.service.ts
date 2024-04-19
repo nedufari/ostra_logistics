@@ -79,14 +79,18 @@ export class CustomerAuthService {
   }
 
   // get customer profile
-  async getProfile(customerId: string): Promise<ICustomer> {
-    const customer = await this.customerrepo.findOne({
-      where: { id: customerId },
-    });
-    if (!customer) {
-      throw new NotFoundException('Customer not found');
-    }
-    return customer;
+  async getProfile(customer: CustomerEntity): Promise<ICustomer> {
+   try {
+    
+     if (!customer) {
+       throw new NotFoundException('Customer not found');
+     }
+     return customer;
+   } catch (error) {
+    console.log(error)
+    throw new InternalServerErrorException('something happened while trying to fetch user profile')
+    
+   }
   }
 
   //sign up customer

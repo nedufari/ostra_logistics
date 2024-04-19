@@ -145,9 +145,7 @@ export class UpdateRiderInfoByAdminDto{
      @IsOptional()
     lastname:string
 
-    @IsString()
-    @IsOptional()
-    profile_picture:string
+   
 
     @IsDateString()
      @IsOptional()
@@ -163,7 +161,7 @@ export class UpdateRiderInfoByAdminDto{
 
     @IsString()
     @IsOptional()
-    @Matches(/^NGR\+234\d{10}$/,{message:"mobile number must be a valid Nigerian service operator's cell number"})
+    //@Matches(/^NGR\+234\d{10}$/,{message:"mobile number must be a valid Nigerian service operator's cell number"})
     mobile:string
 
     @IsString()
@@ -188,12 +186,10 @@ export class UpdateRiderInfoByAdminDto{
 
     @IsString()
      @IsOptional()
-    @Matches(/^NGR\+234\d{10}$/,{message:"mobile number must be a valid Nigerian service operator's cell number"})
+    //@Matches(/^NGR\+234\d{10}$/,{message:"mobile number must be a valid Nigerian service operator's cell number"})
     gurantor1_mobile:string
 
-    @IsString()
-    @IsOptional()
-    guarantor1_picture:string
+   
 
     @IsString()
     @IsOptional()
@@ -205,12 +201,10 @@ export class UpdateRiderInfoByAdminDto{
 
     @IsString()
     @IsOptional()
-    @Matches(/^NGR\+234\d{10}$/,{message:"mobile number must be a valid Nigerian service operator's cell number"})
+    //@Matches(/^NGR\+234\d{10}$/,{message:"mobile number must be a valid Nigerian service operator's cell number"})
     gurantor2_mobile:string
 
-    @IsString()
-    @IsOptional()
-    guarantor2_picture:string
+   
 
 }
 

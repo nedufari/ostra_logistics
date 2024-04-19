@@ -67,5 +67,16 @@ export class AdminRiderDashBoardController{
         return await this.adminriderservice.UploadDriverLicenseBack(file,riderID)
     }
 
+    @Get('total-number-of-rider')
+    async GetTotalNumberOfRiders(){
+        return await this.adminriderservice.totalnumberofriders()
+
+    }
+
+    @Patch('assign-order-to-rider/:orderID/:riderID')
+    async AssignOrderToRide(@Param('orderID')orderID:number, @Param('riderID')riderID:string){
+        return await this.adminriderservice.AssignOrderToRider(riderID,orderID)
+    }
+
 
 }

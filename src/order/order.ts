@@ -114,6 +114,9 @@ export interface IOrderRequestFromCustomerToAdmin{
     schedule_date: Date
     initial_cost: number;
 
+    //rider info
+    Rider:RiderEntity
+
 }
 
 export interface ITrackingOrderResponse{

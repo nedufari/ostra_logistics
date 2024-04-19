@@ -13,9 +13,9 @@ export class CustomerAuthController{
 
     @UseGuards(JwtGuard)
     @Get('profile')
-    async getProfile(@Req() req: any): Promise<any> {
-      const userId = req.user.id;
-      return this.customerauthservice.getProfile(userId);
+    async getProfile(@Req() req): Promise<any> {
+      
+      return this.customerauthservice.getProfile(req.user);
     }
 
     @Post('/register')

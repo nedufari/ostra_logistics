@@ -66,6 +66,8 @@ export class AdminCustomerDashBoardService{
              schedule_date:order.schedule_date,
              initial_cost:order.initial_cost,
              customer:order.customer,
+
+             Rider:order.Rider
              
          }))
  
@@ -81,12 +83,8 @@ export class AdminCustomerDashBoardService{
 
     //make openning bid based on influenced matrix cost calculations
 
-    async MakeOpenningBid(adminID:string, orderID:number,dto:AdminPlaceBidDto):Promise<IInitialBidsResponse>{
-        const admin = await this.adminrepo.findOne({ where: { id: adminID} });
-    if (!admin)
-      throw new NotFoundException(
-        `admin with the id: ${adminID} is not found in ostra logistics admin database`,
-      );
+    async MakeOpenningBid( orderID:number,dto:AdminPlaceBidDto):Promise<IInitialBidsResponse>{
+     
 
       const order = await this.orderRepo.findOne({where:{id:orderID},relations:['bid']})
       if (!order) throw new NotFoundException(`order with the id: ${orderID} is not found`)
@@ -98,7 +96,7 @@ export class AdminCustomerDashBoardService{
       bid.initialBidPlacedAt = new Date()
       bid.bidStatus = BidStatus.BID_PLACED
 
-      this.bidevent.emitBidEvent(BidEvent.BID_INITIATED,{adminID,orderID})
+      //this.bidevent.emitBidEvent(BidEvent.BID_INITIATED,{admin,orderID})
 
       await this.bidRepo.save(bid)
 
@@ -116,13 +114,8 @@ export class AdminCustomerDashBoardService{
 
     //counter bids sent in 
 
-    async counterCustomerCouterBid(adminID:string, bidID:number, dto:counterBidDto):Promise<IBids>{
-      const admin = await this.adminrepo.findOne({ where: { id: adminID} });
-      if (!admin)
-        throw new NotFoundException(
-          `admin with the id: ${adminID} is not found in ostra logistics admin database`,
-        );
-
+    async counterCustomerCouterBid( bidID:number, dto:counterBidDto):Promise<IBids>{
+    
         //check if order is related to the countered bid 
         const bid = await this.bidRepo.findOne({where:{id:bidID},relations:['order','customer']})
         if (!bid) throw new NotFoundException('this bis isnt found')
@@ -136,7 +129,7 @@ export class AdminCustomerDashBoardService{
         bid.counteredAt = new Date()
         await this.bidRepo.save(bid)
 
-        this.bidevent.emitBidEvent(BidEvent.COUNTERED,{adminID,bidID})
+        //this.bidevent.emitBidEvent(BidEvent.COUNTERED,{adminID,bidID})
 
         return bid
 

@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   NotAcceptableException,
@@ -523,6 +524,12 @@ export class CustomerService {
   //update info for onboarding and for profile 
   async UpdateCustomerInfo(dto:UpdateCustomerDto,customer:CustomerEntity):Promise<{message:string}>{
     try {
+
+       // Check if the provided email is already in use
+       const existingCustomer = await this.customerRepo.findOne({where:{email:dto.email}});
+       if (existingCustomer && existingCustomer.id !== customer.id) {
+         throw new ConflictException('Email is already in use');
+       }
       
       //add the updated data from the dto 
      
